@@ -7,6 +7,7 @@ from os import path
 import json
 import datetime
 import time
+from glob import glob
 
 def import_from_device(device_name, output_path, gpsbabel_path='gpsbabel'):
     retcode = subprocess.call([
@@ -47,6 +48,16 @@ def process_tracks(gpx_path, output_dir, overwrite=False):
 
     return (n_processed, n_written)
 
+def generate_index(tracks_dir):
+    tracks = []
+    for fn in glob(path.join(tracks_dir, '*.json')):
+        tracks.append(json.loads(meta_file.read()))
+
+    with open(path.join(tracks_dir, 'index.json'), 'w') as index_file:
+        index_file.write(json.dumps(tracks))
+
+    return len(tracks)
+
 class DateTimeJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
@@ -74,4 +85,6 @@ if __name__ == '__main__':
     else:
         gpx_path = args.file[0]
 
-    process_tracks(gpx_path, path.expanduser('~/.gps-log/tracks'), args.overwrite)
+    tracks_dir = path.expanduser('~/.gps-log/tracks')
+    process_tracks(gpx_path, tracks_dir, args.overwrite)
+    generate_index(tracks_dir)
