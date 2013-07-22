@@ -51,7 +51,8 @@ def process_tracks(gpx_path, output_dir, overwrite=False):
 def generate_index(tracks_dir):
     tracks = []
     for fn in glob(path.join(tracks_dir, '*.json')):
-        tracks.append(json.loads(meta_file.read()))
+        with open(fn, 'r') as meta_file:
+            tracks.append(json.loads(meta_file.read()))
 
     with open(path.join(tracks_dir, 'index.json'), 'w') as index_file:
         index_file.write(json.dumps(tracks))
@@ -73,18 +74,21 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--from-device', default='usb:')
     parser.add_argument('--overwrite', action='store_true', default=False)
-    parser.add_argument('file', nargs='*')
+    parser.add_argument('files', nargs='*')
 
     args = parser.parse_args(sys.argv[1:len(sys.argv)])
 
-    if args.from_device and len(args.file) == 0:
+    if args.from_device and len(args.files) == 0:
         f, gpx_path = tempfile.mkstemp()
         if not import_from_device(args.from_device, gpx_path):
             print "Import from device failed"
             sys.exit(1)
+        files = [gpx_path]
     else:
-        gpx_path = args.file[0]
+        files = args.files
 
     tracks_dir = path.expanduser('~/.gps-log/tracks')
-    process_tracks(gpx_path, tracks_dir, args.overwrite)
+
+    for f in files:
+        process_tracks(f, tracks_dir, args.overwrite)
     generate_index(tracks_dir)
