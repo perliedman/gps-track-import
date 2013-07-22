@@ -4,6 +4,9 @@ import gpxpy
 import gpxpy.gpx
 import subprocess
 from os import path
+import json
+import datetime
+import time
 
 def import_from_device(device_name, output_path, gpsbabel_path='gpsbabel'):
     retcode = subprocess.call([
@@ -18,19 +21,38 @@ def import_from_device(device_name, output_path, gpsbabel_path='gpsbabel'):
 def process_tracks(gpx_path, output_dir, overwrite=False):
     f = open(gpx_path, 'r')
     gpx = gpxpy.parse(f)
+    n_processed = 0
+    n_written = 0
 
     for t in gpx.tracks:
-        print "Processing track %s" % t.name
         if len(t.segments) > 0 and len(t.segments[0].points) > 0:
             p = t.segments[0].points[0]
-            filename = '%s-%s.gpx' % (p.time.strftime('%Y-%m-%d'), t.name)
-            track_path = path.join(output_dir, filename)
+            name = '%s-%s' % (p.time.strftime('%Y-%m-%d'), t.name)
+            gpx_filename = '%s.gpx' % name
+            track_path = path.join(output_dir, gpx_filename)
             if overwrite or not path.exists(track_path):
                 with open(track_path, 'w') as track_file:
                     track_file.write(gpxpy.gpx.GPX(tracks=[t]).to_xml())
-                    print "Wrote file %s" % filename
+                with open(path.join(output_dir, '%s.json' % name), 'w') as meta_file:
+                    meta_file.write(json.dumps({
+                            'name': t.name,
+                            'time': t.get_time_bounds(),
+                            'duration': t.get_duration(),
+                            'distance': t.length_2d(),
+                        }, cls=DateTimeJSONEncoder, indent=True))
+
+                    n_written = n_written + 1
+
+        n_processed = n_processed + 1
+
+    return (n_processed, n_written)
+
+class DateTimeJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+            return time.mktime(obj.timetuple())
         else:
-            print "(no segments and/or points found)"
+            return super(DateTimeJSONEncoder, self).default(obj)
 
 if __name__ == '__main__':
     import argparse
