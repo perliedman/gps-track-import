@@ -8,6 +8,7 @@ import json
 import datetime
 import time
 from glob import glob
+import re
 
 def import_from_device(device_name, output_path, gpsbabel_path='gpsbabel'):
     retcode = subprocess.call([
@@ -28,7 +29,7 @@ def process_tracks(gpx_path, output_dir, overwrite=False):
     for t in gpx.tracks:
         if len(t.segments) > 0 and len(t.segments[0].points) > 0:
             p = t.segments[0].points[0]
-            name = '%s-%s' % (p.time.strftime('%Y-%m-%d'), t.name)
+            name = '%s-%s' % (p.time.strftime('%Y-%m-%d'), re.sub(r'\W+','-', t.name))
             gpx_filename = '%s.gpx' % name
             track_path = path.join(output_dir, gpx_filename)
             if overwrite or not path.exists(track_path):
