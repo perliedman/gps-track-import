@@ -9,6 +9,7 @@ import datetime
 import time
 from glob import glob
 import re
+from nominatim.reversegeocoder import ReverseGeocoder
 
 def import_from_device(device_name, output_path, gpsbabel_path='gpsbabel'):
     retcode = subprocess.call([
@@ -19,6 +20,23 @@ def import_from_device(device_name, output_path, gpsbabel_path='gpsbabel'):
         '-o', 'gpx',
         '-F', output_path])
     return retcode == 0
+
+last_geocode = None
+
+def geocode(t):
+    global last_geocode
+    # Avoid breaking Nominatim's terms of service (max 1 req/s)
+    now = time.time()
+    if last_geocode and now - last_geocode < 1:
+        time.sleep(min(1, now - last_geocode))
+    try:
+        center = t.get_center()
+        # TODO: make hardcoded zoom (14) a function of track's bbox size
+        location = ReverseGeocoder().geocode(center.latitude, center.longitude, 14)
+        last_geocode = time.time()
+        return location['full_address'].split(',')[0]
+    except:
+        return None
 
 def process_tracks(gpx_path, output_dir, overwrite=False):
     f = open(gpx_path, 'r')
@@ -41,6 +59,7 @@ def process_tracks(gpx_path, output_dir, overwrite=False):
                             'time': t.get_time_bounds(),
                             'duration': t.get_duration(),
                             'distance': t.length_2d(),
+                            'location': geocode(t)
                         }, cls=DateTimeJSONEncoder, indent=True))
 
                     n_written = n_written + 1
@@ -90,6 +109,13 @@ if __name__ == '__main__':
 
     tracks_dir = path.expanduser('~/.gps-log/tracks')
 
+    c = 0
     for f in files:
         process_tracks(f, tracks_dir, args.overwrite)
+        if c % 10 == 0:
+            sys.stdout.write('.')
+            sys.stdout.flush()
+        c = c + 1
     generate_index(tracks_dir)
+
+    sys.stdout.write('\n')

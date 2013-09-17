@@ -8,6 +8,7 @@ Requirements
 
 * Python 2.7
 * [gpxpy](https://github.com/tkrajina/gpxpy)
+* [python-nominatim](https://github.com/perliedman/python-nominatim) (currently, my own fork is required until [rdeguzman](https://github.com/rdeguzman) merges my pull request)
 
 Usage
 -----
