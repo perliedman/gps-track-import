@@ -8,7 +8,7 @@ Requirements
 
 * Python 2.7
 * [gpxpy](https://github.com/tkrajina/gpxpy)
-* [python-nominatim](https://github.com/perliedman/python-nominatim) (currently, my own fork is required until [rdeguzman](https://github.com/rdeguzman) merges my pull request)
+* [python-nominatim](https://github.com/rdeguzman/python-nominatim)
 
 Usage
 -----
@@ -20,7 +20,7 @@ import_tracks.py [-h] [--from-device FROM_DEVICE] [--overwrite]
 
 This assumes you have GPSBabel installed and on your path.
 
-Unless ```--from-device``` is used, tracks will be imported from ```usb:```. 
+Unless ```--from-device``` is used, tracks will be imported from ```usb:```.
 
 Optionally, one or more GPX files can be supplied, from which tracks will be imported instead; ```--from-device``` will be ignored in this case.
 
