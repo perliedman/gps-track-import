@@ -104,7 +104,7 @@ def tracks_gpx(tracks_dir):
             yield((fn, gpxpy.parse(track)))
 
 def generate_index(tracks_dir):
-    tracks = [json for (fn, json) in tracks_json(tracks_dir)]
+    tracks = [metadata for (fn, metadata) in tracks_json(tracks_dir)]
 
     with open(path.join(tracks_dir, 'index.json'), 'w') as index_file:
         index_file.write(json.dumps(tracks))
